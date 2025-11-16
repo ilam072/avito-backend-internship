@@ -27,7 +27,7 @@ import (
 	"testing"
 )
 
-const testDBConnStr = "postgres://postgres:postgres@localhost:5434/pr_db_test?sslmode=disable"
+const testDBConnStr = "postgres://postgres:postgres@localhost:5433/pr_db_test?sslmode=disable"
 
 func CleanDB(t *testing.T, db *pgxpool.Pool) {
 	ctx := context.Background()
