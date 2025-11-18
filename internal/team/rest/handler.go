@@ -57,24 +57,3 @@ func (h *TeamHandler) CreateTeam(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"team": teamResp})
 }
-
-//func (h *TeamHandler) GetTeam(c *gin.Context) {
-//	name := c.Query("team_name")
-//	if name == "" {
-//		response.BadRequest(c, "missing query param 'team_name'")
-//		return
-//	}
-//
-//	team, err := h.team.GetTeam(c.Request.Context(), name)
-//	if err != nil {
-//		if errors.Is(err, domain.ErrTeamNotFound) {
-//			response.NotFound(c)
-//			return
-//		}
-//		log.Logger.Error().Err(err).Any("name", name).Msg("failed to get team")
-//		response.InternalServerError(c)
-//		return
-//	}
-//
-//	c.JSON(http.StatusOK, team)
-//}
