@@ -14,7 +14,6 @@ import (
 
 type Team interface {
 	CreateTeam(ctx context.Context, team dto.TeamWithMembers) (dto.TeamWithMembers, error)
-	//GetTeam(ctx context.Context, name string) (dto.TeamWithMembers, error)
 }
 
 type Validator interface {

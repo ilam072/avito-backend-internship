@@ -16,20 +16,18 @@ func New(
 	engine.Use(gin.Logger())
 	engine.Use(gin.Recovery())
 
-	api := engine.Group("/api")
-
 	// team
-	api.POST("/team/add", teamHandler.CreateTeam)
-	api.GET("/team/get", userHandler.GetTeam) // query ?team_name=
+	engine.POST("/team/add", teamHandler.CreateTeam)
+	engine.GET("/team/get", userHandler.GetTeam) // query ?team_name=
 
 	// users
-	api.POST("/users/setIsActive", userHandler.SetUserIsActive)
-	api.GET("/users/getReview", prHandler.GetReview) // query ?user_id=
+	engine.POST("/users/setIsActive", userHandler.SetUserIsActive)
+	engine.GET("/users/getReview", prHandler.GetReview) // query ?user_id=
 
 	// pull request
-	api.POST("/pullRequest/create", prHandler.CreatePullRequest)
-	api.POST("/pullRequest/merge", prHandler.MergePullRequest)
-	api.POST("/pullRequest/reassign", prHandler.Reassign)
+	engine.POST("/pullRequest/create", prHandler.CreatePullRequest)
+	engine.POST("/pullRequest/merge", prHandler.MergePullRequest)
+	engine.POST("/pullRequest/reassign", prHandler.Reassign)
 
 	return engine
 }
