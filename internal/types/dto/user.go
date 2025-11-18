@@ -19,7 +19,7 @@ type TeamWithMembers struct {
 
 type SetUserIsActiveRequest struct {
 	UserID   uuid.UUID `json:"user_id" validate:"required,uuid"`
-	IsActive bool      `json:"is_active" validate:"required"`
+	IsActive *bool     `json:"is_active" validate:"required"`
 }
 
 type UpdateUserResponse struct {

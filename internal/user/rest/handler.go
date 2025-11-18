@@ -45,7 +45,7 @@ func (h *UserHandler) SetUserIsActive(c *gin.Context) {
 		return
 	}
 
-	user, err := h.user.SetIsActive(c.Request.Context(), req.UserID, req.IsActive)
+	user, err := h.user.SetIsActive(c.Request.Context(), req.UserID, *req.IsActive)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			response.NotFound(c)

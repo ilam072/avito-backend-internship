@@ -81,19 +81,20 @@ func (r *UserRepo) GetUserByID(ctx context.Context, ID uuid.UUID) (domain.User, 
 	return user, nil
 }
 
-func (r *UserRepo) GetNewUserIDForPRReview(ctx context.Context, oldUserID uuid.UUID) (uuid.UUID, error) {
+func (r *UserRepo) GetNewUserIDForPRReview(ctx context.Context, prID uuid.UUID, oldUserID uuid.UUID) (uuid.UUID, error) {
 	query := `
-		SELECT id 
-		FROM users u 
-		WHERE u.is_active = TRUE 
-		  AND u.team_id = (SELECT team_id FROM users u2 WHERE u2.id = $1) 
-		  AND u.id != $1 
-		ORDER BY random() 
-		LIMIT 1
+   		SELECT id 
+   		FROM users u 
+   		WHERE u.is_active = TRUE 
+   		  AND u.team_id = (SELECT team_id FROM users u2 WHERE u2.id = $1) 
+   		  AND u.id NOT IN (
+   		      SELECT reviewer_id FROM pr_reviewers WHERE pr_id = $2
+   		  )
+   		ORDER BY random() 
+   		LIMIT 1
 	`
-
 	var ID uuid.UUID
-	if err := r.db.QueryRow(ctx, query, oldUserID).Scan(&ID); err != nil {
+	if err := r.db.QueryRow(ctx, query, oldUserID, prID).Scan(&ID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return uuid.Nil, ErrUserNotFound
 		}

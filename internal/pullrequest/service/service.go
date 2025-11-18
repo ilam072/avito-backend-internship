@@ -24,7 +24,7 @@ type PullRequestRepo interface {
 
 type UserRepo interface {
 	GetUserByID(ctx context.Context, ID uuid.UUID) (domain.User, error)
-	GetNewUserIDForPRReview(ctx context.Context, oldUserID uuid.UUID) (uuid.UUID, error)
+	GetNewUserIDForPRReview(ctx context.Context, prID uuid.UUID, oldUserID uuid.UUID) (uuid.UUID, error)
 	UserExists(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
@@ -126,7 +126,7 @@ func (p *PullRequest) ReassignReviewer(ctx context.Context, prID uuid.UUID, user
 	}
 
 	// userRepo.GetNewUserIDForPRReview (нет кандидатов)
-	newUserID, err := p.userRepo.GetNewUserIDForPRReview(ctx, userID)
+	newUserID, err := p.userRepo.GetNewUserIDForPRReview(ctx, prID, userID)
 	if err != nil {
 		if errors.Is(err, userrepo.ErrUserNotFound) {
 			return dto.ReassignResponse{}, errutils.Wrap(op, domain.ErrNoCandidate)

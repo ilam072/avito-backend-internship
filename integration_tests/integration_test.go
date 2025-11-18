@@ -27,7 +27,7 @@ import (
 	"testing"
 )
 
-const testDBConnStr = "postgres://postgres:postgres@localhost:5433/pr_db_test?sslmode=disable"
+const testDBConnStr = "postgres://postgres:postgres@localhost:5434/pr_db_test?sslmode=disable"
 
 func CleanDB(t *testing.T, db *pgxpool.Pool) {
 	ctx := context.Background()
@@ -84,7 +84,7 @@ func createTeamHTTP(t *testing.T, r *gin.Engine, team TeamWithMembers) {
 	ctx := context.Background()
 	body, _ := json.Marshal(team)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequestWithContext(ctx, "POST", "/api/team/add", bytes.NewBuffer(body))
+	req, _ := http.NewRequestWithContext(ctx, "POST", "/team/add", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	r.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code, "Precondition: failed to create team")
@@ -101,7 +101,7 @@ func createPRHTTP(t *testing.T, r *gin.Engine, prID uuid.UUID, name string, auth
 	body, _ := json.Marshal(createReq)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequestWithContext(ctx, "POST", "/api/pullRequest/create", bytes.NewBuffer(body))
+	req, _ := http.NewRequestWithContext(ctx, "POST", "/pullRequest/create", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	r.ServeHTTP(w, req)
 	require.Equal(t, http.StatusCreated, w.Code, "Precondition: failed to create PR")
@@ -158,7 +158,7 @@ func TestGetTeam(t *testing.T) {
 
 	t.Run("GetTeam_Success", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequestWithContext(ctx, "GET", "/api/team/get?team_name="+teamName, nil)
+		req, _ := http.NewRequestWithContext(ctx, "GET", "/team/get?team_name="+teamName, nil)
 		r.ServeHTTP(w, req)
 
 		require.Equal(t, http.StatusOK, w.Code)
@@ -184,7 +184,7 @@ func TestGetTeam(t *testing.T) {
 
 	t.Run("GetTeam_NotFound", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequestWithContext(ctx, "GET", "/api/team/get?team_name=non_existent", nil)
+		req, _ := http.NewRequestWithContext(ctx, "GET", "/team/get?team_name=non_existent", nil)
 		r.ServeHTTP(w, req)
 
 		require.Equal(t, http.StatusConflict, w.Code)
@@ -258,7 +258,7 @@ func TestPullRequestCreate(t *testing.T) {
 		body, _ := json.Marshal(createReq)
 
 		wConflict := httptest.NewRecorder()
-		reqConflict, _ := http.NewRequestWithContext(ctx, "POST", "/api/pullRequest/create", bytes.NewBuffer(body))
+		reqConflict, _ := http.NewRequestWithContext(ctx, "POST", "/pullRequest/create", bytes.NewBuffer(body))
 		reqConflict.Header.Set("Content-Type", "application/json")
 		r.ServeHTTP(wConflict, reqConflict)
 
@@ -306,7 +306,7 @@ func TestPullRequestMerge(t *testing.T) {
 		body, _ := json.Marshal(mergeReq)
 
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequestWithContext(ctx, "POST", "/api/pullRequest/merge", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(ctx, "POST", "/pullRequest/merge", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		r.ServeHTTP(w, req)
 
@@ -333,7 +333,7 @@ func TestPullRequestMerge(t *testing.T) {
 		body, _ := json.Marshal(mergeReq)
 
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequestWithContext(ctx, "POST", "/api/pullRequest/merge", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(ctx, "POST", "/pullRequest/merge", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		r.ServeHTTP(w, req)
 
@@ -385,7 +385,7 @@ func TestPullRequestReassign(t *testing.T) {
 		body, _ := json.Marshal(reassignReq)
 
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequestWithContext(ctx, "POST", "/api/pullRequest/reassign", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(ctx, "POST", "/pullRequest/reassign", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		r.ServeHTTP(w, req)
 
@@ -415,7 +415,7 @@ func TestPullRequestReassign(t *testing.T) {
 		body, _ := json.Marshal(reassignReq)
 
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequestWithContext(ctx, "POST", "/api/pullRequest/reassign", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(ctx, "POST", "/pullRequest/reassign", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 		r.ServeHTTP(w, req)
 
@@ -472,7 +472,7 @@ func TestGetReviewAssignedPRs(t *testing.T) {
 	addReviewerDirect(t, ctxDB, db, prOtherID3, otherReviewerID)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequestWithContext(ctx, "GET", "/api/users/getReview?user_id="+targetReviewerID.String(), nil)
+	req, _ := http.NewRequestWithContext(ctx, "GET", "/users/getReview?user_id="+targetReviewerID.String(), nil)
 	r.ServeHTTP(w, req)
 
 	require.Equal(t, http.StatusOK, w.Code)
