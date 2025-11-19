@@ -1,11 +1,9 @@
 package dto
 
-import "github.com/google/uuid"
-
 type User struct {
-	ID       uuid.UUID `json:"user_id" validate:"required,uuid"`
-	Username string    `json:"username" validate:"required"`
-	IsActive bool      `json:"is_active" validate:"required"`
+	ID       string `json:"user_id" validate:"required"`
+	Username string `json:"username" validate:"required"`
+	IsActive bool   `json:"is_active" validate:"required"`
 }
 
 type Users struct {
@@ -18,13 +16,13 @@ type TeamWithMembers struct {
 }
 
 type SetUserIsActiveRequest struct {
-	UserID   uuid.UUID `json:"user_id" validate:"required,uuid"`
-	IsActive *bool     `json:"is_active" validate:"required"`
+	UserID   string `json:"user_id" validate:"required"`
+	IsActive *bool  `json:"is_active" validate:"required"`
 }
 
 type UpdateUserResponse struct {
-	ID       uuid.UUID `json:"user_id"`
-	Username string    `json:"username"`
-	TeamName string    `json:"team_name"`
-	IsActive bool      `json:"is_active"`
+	ID       string `json:"user_id"`
+	Username string `json:"username"`
+	TeamName string `json:"team_name"`
+	IsActive bool   `json:"is_active"`
 }

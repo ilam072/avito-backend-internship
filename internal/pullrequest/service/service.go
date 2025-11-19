@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	prrepo "github.com/ilam072/avito-backend-internship/internal/pullrequest/repo"
 	"github.com/ilam072/avito-backend-internship/internal/types/domain"
 	"github.com/ilam072/avito-backend-internship/internal/types/dto"
@@ -13,19 +12,19 @@ import (
 
 type PullRequestRepo interface {
 	CreatePullRequest(ctx context.Context, pr domain.PullRequest) (domain.PullRequest, error)
-	GetPullRequestByID(ctx context.Context, ID uuid.UUID) (domain.PullRequest, error)
-	GetPullRequestReviewers(ctx context.Context, ID uuid.UUID) ([]uuid.UUID, error)
-	GetPRsWhereUserIsReviewer(ctx context.Context, userID uuid.UUID) ([]domain.PullRequest, error)
-	UpdateReviewer(ctx context.Context, prID, oldUserID, newUserID uuid.UUID) error
-	MergePullRequest(ctx context.Context, ID uuid.UUID) (domain.PullRequest, error)
-	IsUserAssignedForPR(ctx context.Context, prID, userID uuid.UUID) (bool, error)
-	PullRequestExists(ctx context.Context, id uuid.UUID) (bool, error)
+	GetPullRequestByID(ctx context.Context, ID string) (domain.PullRequest, error)
+	GetPullRequestReviewers(ctx context.Context, ID string) ([]string, error)
+	GetPRsWhereUserIsReviewer(ctx context.Context, userID string) ([]domain.PullRequest, error)
+	UpdateReviewer(ctx context.Context, prID, oldUserID, newUserID string) error
+	MergePullRequest(ctx context.Context, ID string) (domain.PullRequest, error)
+	IsUserAssignedForPR(ctx context.Context, prID, userID string) (bool, error)
+	PullRequestExists(ctx context.Context, id string) (bool, error)
 }
 
 type UserRepo interface {
-	GetUserByID(ctx context.Context, ID uuid.UUID) (domain.User, error)
-	GetNewUserIDForPRReview(ctx context.Context, prID uuid.UUID, oldUserID uuid.UUID) (uuid.UUID, error)
-	UserExists(ctx context.Context, id uuid.UUID) (bool, error)
+	GetUserByID(ctx context.Context, ID string) (domain.User, error)
+	GetNewUserIDForPRReview(ctx context.Context, prID string, oldUserID string) (string, error)
+	UserExists(ctx context.Context, id string) (bool, error)
 }
 
 type PullRequest struct {
@@ -71,7 +70,7 @@ func (p *PullRequest) CreatePullRequest(ctx context.Context, pr dto.CreatePullRe
 	}, nil
 }
 
-func (p *PullRequest) MergePullRequest(ctx context.Context, ID uuid.UUID) (dto.PRResponse, error) {
+func (p *PullRequest) MergePullRequest(ctx context.Context, ID string) (dto.PRResponse, error) {
 	const op = "service.pr.Merge"
 
 	pr, err := p.prRepo.MergePullRequest(ctx, ID)
@@ -92,7 +91,7 @@ func (p *PullRequest) MergePullRequest(ctx context.Context, ID uuid.UUID) (dto.P
 	}, nil
 }
 
-func (p *PullRequest) ReassignReviewer(ctx context.Context, prID uuid.UUID, userID uuid.UUID) (dto.ReassignResponse, error) {
+func (p *PullRequest) ReassignReviewer(ctx context.Context, prID string, userID string) (dto.ReassignResponse, error) {
 	const op = "service.pr.ReassignReviewer"
 
 	// prRepo.GetPullRequestByID (проверка merged, пр не найден)
@@ -135,7 +134,7 @@ func (p *PullRequest) ReassignReviewer(ctx context.Context, prID uuid.UUID, user
 	}
 
 	// prRepo.UpdateReviewer
-	if err := p.prRepo.UpdateReviewer(ctx, prID, userID, newUserID); err != nil {
+	if err = p.prRepo.UpdateReviewer(ctx, prID, userID, newUserID); err != nil {
 		return dto.ReassignResponse{}, errutils.Wrap(op, err)
 	}
 
@@ -166,7 +165,7 @@ func (p *PullRequest) ReassignReviewer(ctx context.Context, prID uuid.UUID, user
 	}, nil
 }
 
-func (p *PullRequest) GetPRsWhereUserIsReviewer(ctx context.Context, userID uuid.UUID) (dto.GetReviewResponse, error) {
+func (p *PullRequest) GetPRsWhereUserIsReviewer(ctx context.Context, userID string) (dto.GetReviewResponse, error) {
 	const op = "service.pr.GetPRsWhereUserIsReviewer"
 
 	prs, err := p.prRepo.GetPRsWhereUserIsReviewer(ctx, userID)
@@ -175,18 +174,18 @@ func (p *PullRequest) GetPRsWhereUserIsReviewer(ctx context.Context, userID uuid
 	}
 
 	pullRequestsToReturn := make([]struct {
-		ID       uuid.UUID `json:"pull_request_id"`
-		Name     string    `json:"pull_request_name"`
-		AuthorID uuid.UUID `json:"author_id"`
-		Status   string    `json:"status"`
+		ID       string `json:"pull_request_id"`
+		Name     string `json:"pull_request_name"`
+		AuthorID string `json:"author_id"`
+		Status   string `json:"status"`
 	}, len(prs))
 
 	for i, pr := range prs {
 		pullRequestsToReturn[i] = struct {
-			ID       uuid.UUID `json:"pull_request_id"`
-			Name     string    `json:"pull_request_name"`
-			AuthorID uuid.UUID `json:"author_id"`
-			Status   string    `json:"status"`
+			ID       string `json:"pull_request_id"`
+			Name     string `json:"pull_request_name"`
+			AuthorID string `json:"author_id"`
+			Status   string `json:"status"`
 		}{
 			ID:       pr.ID,
 			Name:     pr.Name,

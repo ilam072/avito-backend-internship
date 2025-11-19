@@ -11,7 +11,6 @@ import (
 
 type TeamRepo interface {
 	CreateTeam(ctx context.Context, name string, users []domain.User) error
-	//GetTeam(ctx context.Context, name string) ([]domain.User, error)
 }
 
 type Team struct {

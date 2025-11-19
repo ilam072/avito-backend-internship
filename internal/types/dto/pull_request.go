@@ -1,53 +1,52 @@
 package dto
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
 type CreatePullRequest struct {
-	ID       uuid.UUID `json:"pull_request_id" validate:"required,uuid"`
-	Name     string    `json:"pull_request_name" validate:"required"`
-	AuthorID uuid.UUID `json:"author_id" validate:"required"`
+	ID       string `json:"pull_request_id" validate:"required"`
+	Name     string `json:"pull_request_name" validate:"required"`
+	AuthorID string `json:"author_id" validate:"required"`
 }
 
 type GetPullRequest struct {
-	ID        uuid.UUID   `json:"pull_request_id"`
-	Name      string      `json:"pull_request_name"`
-	AuthorID  uuid.UUID   `json:"author_id"`
-	Status    string      `json:"status"`
-	Reviewers []uuid.UUID `json:"assigned_reviewers"`
+	ID        string   `json:"pull_request_id"`
+	Name      string   `json:"pull_request_name"`
+	AuthorID  string   `json:"author_id"`
+	Status    string   `json:"status"`
+	Reviewers []string `json:"assigned_reviewers"`
 }
 
 type MergePRRequest struct {
-	ID uuid.UUID `json:"pull_request_id" validate:"required,uuid"`
+	ID string `json:"pull_request_id" validate:"required"`
 }
 
 type PRResponse struct {
-	ID        uuid.UUID   `json:"pull_request_id"`
-	Name      string      `json:"pull_request_name"`
-	AuthorID  uuid.UUID   `json:"author_id"`
-	Status    string      `json:"status"`
-	Reviewers []uuid.UUID `json:"assigned_reviewers"`
-	MergedAt  time.Time   `json:"merged_at"`
+	ID        string    `json:"pull_request_id"`
+	Name      string    `json:"pull_request_name"`
+	AuthorID  string    `json:"author_id"`
+	Status    string    `json:"status"`
+	Reviewers []string  `json:"assigned_reviewers"`
+	MergedAt  time.Time `json:"merged_at"`
 }
 
 type ReassignRequest struct {
-	PullRequestID uuid.UUID `json:"pull_request_id" validate:"required,uuid"`
-	UserID        uuid.UUID `json:"old_user_id" validate:"required,uuid"`
+	PullRequestID string `json:"pull_request_id" validate:"required"`
+	UserID        string `json:"old_user_id" validate:"required"`
 }
 
 type ReassignResponse struct {
 	PR         GetPullRequest `json:"pr"`
-	ReplacedBy uuid.UUID      `json:"replaced_by"`
+	ReplacedBy string         `json:"replaced_by"`
 }
 
 type GetReviewResponse struct {
-	UserID       uuid.UUID `json:"user_id"`
+	UserID       string `json:"user_id"`
 	PullRequests []struct {
-		ID       uuid.UUID `json:"pull_request_id"`
-		Name     string    `json:"pull_request_name"`
-		AuthorID uuid.UUID `json:"author_id"`
-		Status   string    `json:"status"`
+		ID       string `json:"pull_request_id"`
+		Name     string `json:"pull_request_name"`
+		AuthorID string `json:"author_id"`
+		Status   string `json:"status"`
 	} `json:"pull_requests"`
 }

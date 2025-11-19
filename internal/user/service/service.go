@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	"github.com/ilam072/avito-backend-internship/internal/types/domain"
 	"github.com/ilam072/avito-backend-internship/internal/types/dto"
 	"github.com/ilam072/avito-backend-internship/internal/user/repo"
@@ -16,8 +15,8 @@ type TeamRepo interface {
 
 type UserRepo interface {
 	GetUsersByTeam(ctx context.Context, name string) ([]domain.User, error)
-	UpdateIsActive(ctx context.Context, ID uuid.UUID, isActive bool) error
-	GetUserByID(ctx context.Context, ID uuid.UUID) (domain.User, error)
+	UpdateIsActive(ctx context.Context, ID string, isActive bool) error
+	GetUserByID(ctx context.Context, ID string) (domain.User, error)
 }
 
 type User struct {
@@ -55,7 +54,7 @@ func (u *User) GetUsersByTeam(ctx context.Context, name string) (dto.TeamWithMem
 	}, nil
 }
 
-func (u *User) SetIsActive(ctx context.Context, ID uuid.UUID, isActive bool) (dto.UpdateUserResponse, error) {
+func (u *User) SetIsActive(ctx context.Context, ID string, isActive bool) (dto.UpdateUserResponse, error) {
 	const op = "service.user.SetIsActive"
 
 	if err := u.userRepo.UpdateIsActive(ctx, ID, isActive); err != nil {

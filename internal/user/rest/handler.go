@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/ilam072/avito-backend-internship/internal/response"
 	"github.com/ilam072/avito-backend-internship/internal/types/domain"
 	"github.com/ilam072/avito-backend-internship/internal/types/dto"
@@ -14,7 +13,7 @@ import (
 )
 
 type User interface {
-	SetIsActive(ctx context.Context, ID uuid.UUID, isActive bool) (dto.UpdateUserResponse, error)
+	SetIsActive(ctx context.Context, ID string, isActive bool) (dto.UpdateUserResponse, error)
 	GetUsersByTeam(ctx context.Context, name string) (dto.TeamWithMembers, error)
 }
 

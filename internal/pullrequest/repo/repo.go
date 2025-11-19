@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	"github.com/ilam072/avito-backend-internship/internal/types/domain"
 	"github.com/ilam072/avito-backend-internship/pkg/errutils"
 	"github.com/jackc/pgx/v5"
@@ -36,7 +35,7 @@ func (r *PullRequestsRepo) CreatePullRequest(ctx context.Context, pr domain.Pull
 		VALUES ($1, $2, $3)
 		RETURNING status, created_at
 	`
-	if err := tx.QueryRow(ctx, query, pr.ID, pr.AuthorID, pr.Name).Scan(&pr.Status, &pr.CreatedAt); err != nil {
+	if err = tx.QueryRow(ctx, query, pr.ID, pr.AuthorID, pr.Name).Scan(&pr.Status, &pr.CreatedAt); err != nil {
 		return domain.PullRequest{}, errutils.Wrap("failed to insert pull request", err)
 	}
 
@@ -57,9 +56,9 @@ func (r *PullRequestsRepo) CreatePullRequest(ctx context.Context, pr domain.Pull
 	}
 	defer rows.Close()
 
-	var reviewers []uuid.UUID
+	var reviewers []string
 	for rows.Next() {
-		var rID uuid.UUID
+		var rID string
 		if err := rows.Scan(&rID); err != nil {
 			return domain.PullRequest{}, errutils.Wrap("failed to scan reviewer", err)
 		}
@@ -85,7 +84,7 @@ func (r *PullRequestsRepo) CreatePullRequest(ctx context.Context, pr domain.Pull
 		return domain.PullRequest{}, errutils.Wrap("failed to commit transaction", err)
 	}
 
-	pr.Reviewers = make([]uuid.UUID, len(reviewers))
+	pr.Reviewers = make([]string, len(reviewers))
 	for i, rID := range reviewers {
 		pr.Reviewers[i] = rID
 	}
@@ -93,7 +92,7 @@ func (r *PullRequestsRepo) CreatePullRequest(ctx context.Context, pr domain.Pull
 	return pr, nil
 }
 
-func (r *PullRequestsRepo) GetPullRequestByID(ctx context.Context, ID uuid.UUID) (domain.PullRequest, error) {
+func (r *PullRequestsRepo) GetPullRequestByID(ctx context.Context, ID string) (domain.PullRequest, error) {
 	query := `
 		SELECT id, name, author_id, status, created_at, merged_at
 		FROM pull_requests
@@ -119,7 +118,7 @@ func (r *PullRequestsRepo) GetPullRequestByID(ctx context.Context, ID uuid.UUID)
 
 }
 
-func (r *PullRequestsRepo) GetPullRequestReviewers(ctx context.Context, ID uuid.UUID) ([]uuid.UUID, error) {
+func (r *PullRequestsRepo) GetPullRequestReviewers(ctx context.Context, ID string) ([]string, error) {
 	query := `
 		SELECT reviewer_id
 		FROM pr_reviewers
@@ -132,9 +131,9 @@ func (r *PullRequestsRepo) GetPullRequestReviewers(ctx context.Context, ID uuid.
 	}
 	defer rows.Close()
 
-	var reviewersIDs []uuid.UUID
+	var reviewersIDs []string
 	for rows.Next() {
-		var rID uuid.UUID
+		var rID string
 		if err := rows.Scan(&rID); err != nil {
 			return nil, errutils.Wrap("failed to scan reviewer", err)
 		}
@@ -148,7 +147,7 @@ func (r *PullRequestsRepo) GetPullRequestReviewers(ctx context.Context, ID uuid.
 	return reviewersIDs, nil
 }
 
-func (r *PullRequestsRepo) MergePullRequest(ctx context.Context, ID uuid.UUID) (domain.PullRequest, error) {
+func (r *PullRequestsRepo) MergePullRequest(ctx context.Context, ID string) (domain.PullRequest, error) {
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return domain.PullRequest{}, errutils.Wrap("failed to begin transaction", err)
@@ -184,7 +183,7 @@ func (r *PullRequestsRepo) MergePullRequest(ctx context.Context, ID uuid.UUID) (
 			WHERE id = $1
 			RETURNING status, merged_at
 		`
-		if err := tx.QueryRow(ctx, query, ID).Scan(&pr.Status, &pr.MergedAt); err != nil {
+		if err = tx.QueryRow(ctx, query, ID).Scan(&pr.Status, &pr.MergedAt); err != nil {
 			return domain.PullRequest{}, errutils.Wrap("failed to merge pull request", err)
 		}
 	}
@@ -197,7 +196,7 @@ func (r *PullRequestsRepo) MergePullRequest(ctx context.Context, ID uuid.UUID) (
 	defer rows.Close()
 
 	for rows.Next() {
-		var rID uuid.UUID
+		var rID string
 		if err := rows.Scan(&rID); err != nil {
 			return domain.PullRequest{}, errutils.Wrap("failed to scan reviewer", err)
 		}
@@ -214,7 +213,7 @@ func (r *PullRequestsRepo) MergePullRequest(ctx context.Context, ID uuid.UUID) (
 	return pr, nil
 }
 
-func (r *PullRequestsRepo) IsUserAssignedForPR(ctx context.Context, prID, userID uuid.UUID) (bool, error) {
+func (r *PullRequestsRepo) IsUserAssignedForPR(ctx context.Context, prID, userID string) (bool, error) {
 	query := `
 		SELECT EXISTS(
     	SELECT 1
@@ -231,7 +230,7 @@ func (r *PullRequestsRepo) IsUserAssignedForPR(ctx context.Context, prID, userID
 	return exists, nil
 }
 
-func (r *PullRequestsRepo) UpdateReviewer(ctx context.Context, prID, oldUserID, newUserID uuid.UUID) error {
+func (r *PullRequestsRepo) UpdateReviewer(ctx context.Context, prID, oldUserID, newUserID string) error {
 	query := `
 		UPDATE pr_reviewers 
 		SET reviewer_id = $1 
@@ -245,7 +244,7 @@ func (r *PullRequestsRepo) UpdateReviewer(ctx context.Context, prID, oldUserID, 
 	return nil
 }
 
-func (r *PullRequestsRepo) GetPRsWhereUserIsReviewer(ctx context.Context, userID uuid.UUID) ([]domain.PullRequest, error) {
+func (r *PullRequestsRepo) GetPRsWhereUserIsReviewer(ctx context.Context, userID string) ([]domain.PullRequest, error) {
 	query := `
 		SELECT 
 			pr.id,
@@ -292,7 +291,7 @@ func (r *PullRequestsRepo) GetPRsWhereUserIsReviewer(ctx context.Context, userID
 	return prs, nil
 }
 
-func (r *PullRequestsRepo) PullRequestExists(ctx context.Context, ID uuid.UUID) (bool, error) {
+func (r *PullRequestsRepo) PullRequestExists(ctx context.Context, ID string) (bool, error) {
 	const query = `SELECT EXISTS(SELECT 1 FROM pull_requests WHERE id=$1)`
 	var exists bool
 

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/ilam072/avito-backend-internship/internal/response"
 	"github.com/ilam072/avito-backend-internship/internal/types/domain"
 	"github.com/ilam072/avito-backend-internship/internal/types/dto"
@@ -15,9 +14,9 @@ import (
 
 type PullRequest interface {
 	CreatePullRequest(ctx context.Context, pr dto.CreatePullRequest) (dto.GetPullRequest, error)
-	MergePullRequest(ctx context.Context, ID uuid.UUID) (dto.PRResponse, error)
-	ReassignReviewer(ctx context.Context, prID uuid.UUID, userID uuid.UUID) (dto.ReassignResponse, error)
-	GetPRsWhereUserIsReviewer(ctx context.Context, userID uuid.UUID) (dto.GetReviewResponse, error)
+	MergePullRequest(ctx context.Context, ID string) (dto.PRResponse, error)
+	ReassignReviewer(ctx context.Context, prID string, userID string) (dto.ReassignResponse, error)
+	GetPRsWhereUserIsReviewer(ctx context.Context, userID string) (dto.GetReviewResponse, error)
 }
 
 type Validator interface {
@@ -138,15 +137,15 @@ func (h *PullRequestHandler) Reassign(c *gin.Context) {
 }
 
 func (h *PullRequestHandler) GetReview(c *gin.Context) {
-	userID, err := uuid.Parse(c.Query("user_id"))
-	if err != nil {
-		log.Logger.Warn().Err(err).Msg("failed to parse user id into uuid")
+	userID := c.Query("user_id")
+	if userID == "" {
+		log.Logger.Warn().Msg("empty user id")
 		response.BadRequest(c, "invalid 'user_id' query parameter")
 	}
 
 	prsResp, err := h.pr.GetPRsWhereUserIsReviewer(c.Request.Context(), userID)
 	if err != nil {
-		log.Logger.Error().Err(err).Any("user_id", userID.String()).Msg("failed to get prs by user id")
+		log.Logger.Error().Err(err).Any("user_id", userID).Msg("failed to get prs by user id")
 		response.InternalServerError(c)
 		return
 	}

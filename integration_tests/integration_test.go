@@ -74,9 +74,9 @@ func SetupRouterForTesting(t *testing.T) (*gin.Engine, *pgxpool.Pool) {
 type TeamWithMembers struct {
 	TeamName string `json:"team_name"`
 	Members  []struct {
-		ID       uuid.UUID `json:"user_id"`
-		Username string    `json:"username"`
-		IsActive bool      `json:"is_active"`
+		ID       string `json:"user_id"`
+		Username string `json:"username"`
+		IsActive bool   `json:"is_active"`
 	} `json:"members"`
 }
 
@@ -90,13 +90,13 @@ func createTeamHTTP(t *testing.T, r *gin.Engine, team TeamWithMembers) {
 	require.Equal(t, http.StatusCreated, w.Code, "Precondition: failed to create team")
 }
 
-func createPRHTTP(t *testing.T, r *gin.Engine, prID uuid.UUID, name string, authorID uuid.UUID) GetPullRequest {
+func createPRHTTP(t *testing.T, r *gin.Engine, prID string, name string, authorID string) GetPullRequest {
 	ctx := context.Background()
 
 	createReq := struct {
-		ID       uuid.UUID `json:"pull_request_id"`
-		Name     string    `json:"pull_request_name"`
-		AuthorID uuid.UUID `json:"author_id"`
+		ID       string `json:"pull_request_id"`
+		Name     string `json:"pull_request_name"`
+		AuthorID string `json:"author_id"`
 	}{ID: prID, Name: name, AuthorID: authorID}
 	body, _ := json.Marshal(createReq)
 
@@ -114,7 +114,7 @@ func createPRHTTP(t *testing.T, r *gin.Engine, prID uuid.UUID, name string, auth
 	return resp.PR
 }
 
-func addReviewerDirect(t *testing.T, ctx context.Context, db *pgxpool.Pool, prID, reviewerID uuid.UUID) {
+func addReviewerDirect(t *testing.T, ctx context.Context, db *pgxpool.Pool, prID, reviewerID string) {
 	q := `INSERT INTO pr_reviewers (pr_id, reviewer_id, assigned_at) VALUES ($1, $2, NOW())`
 	_, err := db.Exec(ctx, q, prID, reviewerID)
 	if err != nil {
@@ -123,11 +123,11 @@ func addReviewerDirect(t *testing.T, ctx context.Context, db *pgxpool.Pool, prID
 }
 
 type GetPullRequest struct {
-	ID        uuid.UUID   `json:"pull_request_id"`
-	Name      string      `json:"pull_request_name"`
-	AuthorID  uuid.UUID   `json:"author_id"`
-	Status    string      `json:"status"`
-	Reviewers []uuid.UUID `json:"assigned_reviewers"`
+	ID        string   `json:"pull_request_id"`
+	Name      string   `json:"pull_request_name"`
+	AuthorID  string   `json:"author_id"`
+	Status    string   `json:"status"`
+	Reviewers []string `json:"assigned_reviewers"`
 }
 
 //
@@ -140,15 +140,15 @@ func TestGetTeam(t *testing.T) {
 
 	const teamName = "testing_squad_get"
 
-	userID1 := uuid.New()
-	userID2 := uuid.New()
+	userID1 := uuid.New().String()
+	userID2 := uuid.New().String()
 
 	teamReq := TeamWithMembers{
 		TeamName: teamName,
 		Members: []struct {
-			ID       uuid.UUID `json:"user_id"`
-			Username string    `json:"username"`
-			IsActive bool      `json:"is_active"`
+			ID       string `json:"user_id"`
+			Username string `json:"username"`
+			IsActive bool   `json:"is_active"`
 		}{
 			{ID: userID1, Username: "ActiveUser", IsActive: true},
 			{ID: userID2, Username: "InactiveUser", IsActive: false},
@@ -204,18 +204,18 @@ func TestPullRequestCreate(t *testing.T) {
 	r, db := SetupRouterForTesting(t)
 
 	const teamName = "pr_squad"
-	authorID := uuid.New()
-	reviewerID1 := uuid.New()
-	reviewerID2 := uuid.New()
-	reviewerID3 := uuid.New()
-	inactiveID := uuid.New()
+	authorID := uuid.New().String()
+	reviewerID1 := uuid.New().String()
+	reviewerID2 := uuid.New().String()
+	reviewerID3 := uuid.New().String()
+	inactiveID := uuid.New().String()
 
 	teamReq := TeamWithMembers{
 		TeamName: teamName,
 		Members: []struct {
-			ID       uuid.UUID `json:"user_id"`
-			Username string    `json:"username"`
-			IsActive bool      `json:"is_active"`
+			ID       string `json:"user_id"`
+			Username string `json:"username"`
+			IsActive bool   `json:"is_active"`
 		}{
 			{ID: authorID, Username: "Author", IsActive: true},
 			{ID: reviewerID1, Username: "Rev1", IsActive: true},
@@ -227,7 +227,7 @@ func TestPullRequestCreate(t *testing.T) {
 	createTeamHTTP(t, r, teamReq)
 
 	t.Run("CreatePR_Success_AssignsTwoReviewers", func(t *testing.T) {
-		prID := uuid.New()
+		prID := uuid.New().String()
 		prName := "NewFeaturePR"
 
 		pr := createPRHTTP(t, r, prID, prName, authorID)
@@ -244,16 +244,16 @@ func TestPullRequestCreate(t *testing.T) {
 	})
 
 	t.Run("CreatePR_Conflict_IDExists", func(t *testing.T) {
-		prID := uuid.New()
+		prID := uuid.New().String()
 		prName := "AnotherPR"
 
 		_ = createPRHTTP(t, r, prID, prName, authorID)
 
 		ctx := context.Background()
 		createReq := struct {
-			ID       uuid.UUID `json:"pull_request_id"`
-			Name     string    `json:"pull_request_name"`
-			AuthorID uuid.UUID `json:"author_id"`
+			ID       string `json:"pull_request_id"`
+			Name     string `json:"pull_request_name"`
+			AuthorID string `json:"author_id"`
 		}{ID: prID, Name: prName, AuthorID: authorID}
 		body, _ := json.Marshal(createReq)
 
@@ -280,19 +280,19 @@ func TestPullRequestMerge(t *testing.T) {
 	ctx := context.Background()
 
 	const teamName = "merge_squad"
-	authorID := uuid.New()
-	prID := uuid.New()
+	authorID := uuid.New().String()
+	prID := uuid.New().String()
 
 	teamReq := TeamWithMembers{
 		TeamName: teamName,
 		Members: []struct {
-			ID       uuid.UUID `json:"user_id"`
-			Username string    `json:"username"`
-			IsActive bool      `json:"is_active"`
+			ID       string `json:"user_id"`
+			Username string `json:"username"`
+			IsActive bool   `json:"is_active"`
 		}{
 			{ID: authorID, Username: "Author", IsActive: true},
-			{ID: uuid.New(), Username: "Rev1", IsActive: true},
-			{ID: uuid.New(), Username: "Rev2", IsActive: true},
+			{ID: uuid.New().String(), Username: "Rev1", IsActive: true},
+			{ID: uuid.New().String(), Username: "Rev2", IsActive: true},
 		},
 	}
 	createTeamHTTP(t, r, teamReq)
@@ -301,7 +301,7 @@ func TestPullRequestMerge(t *testing.T) {
 
 	t.Run("MergePR_Success", func(t *testing.T) {
 		mergeReq := struct {
-			ID uuid.UUID `json:"pull_request_id"`
+			ID string `json:"pull_request_id"`
 		}{ID: prID}
 		body, _ := json.Marshal(mergeReq)
 
@@ -326,9 +326,9 @@ func TestPullRequestMerge(t *testing.T) {
 	})
 
 	t.Run("MergePR_NotFound", func(t *testing.T) {
-		nonExistentID := uuid.New()
+		nonExistentID := uuid.New().String()
 		mergeReq := struct {
-			ID uuid.UUID `json:"pull_request_id"`
+			ID string `json:"pull_request_id"`
 		}{ID: nonExistentID}
 		body, _ := json.Marshal(mergeReq)
 
@@ -348,19 +348,19 @@ func TestPullRequestReassign(t *testing.T) {
 	ctx := context.Background()
 
 	const teamName = "reassign_squad"
-	authorID := uuid.New()
-	reviewerToReplace := uuid.New()
-	newCandidateID := uuid.New()
-	otherID := uuid.New()
+	authorID := uuid.New().String()
+	reviewerToReplace := uuid.New().String()
+	newCandidateID := uuid.New().String()
+	otherID := uuid.New().String()
 
-	prID := uuid.New()
+	prID := uuid.New().String()
 
 	teamReq := TeamWithMembers{
 		TeamName: teamName,
 		Members: []struct {
-			ID       uuid.UUID `json:"user_id"`
-			Username string    `json:"username"`
-			IsActive bool      `json:"is_active"`
+			ID       string `json:"user_id"`
+			Username string `json:"username"`
+			IsActive bool   `json:"is_active"`
 		}{
 			{ID: authorID, Username: "Author", IsActive: true},
 			{ID: reviewerToReplace, Username: "OldReviewer", IsActive: true},
@@ -379,8 +379,8 @@ func TestPullRequestReassign(t *testing.T) {
 
 	t.Run("Reassign_Success", func(t *testing.T) {
 		reassignReq := struct {
-			PullRequestID uuid.UUID `json:"pull_request_id"`
-			UserID        uuid.UUID `json:"old_user_id"`
+			PullRequestID string `json:"pull_request_id"`
+			UserID        string `json:"old_user_id"`
 		}{PullRequestID: prID, UserID: reviewerToReplace}
 		body, _ := json.Marshal(reassignReq)
 
@@ -393,9 +393,9 @@ func TestPullRequestReassign(t *testing.T) {
 
 		var resp struct {
 			PR struct {
-				Reviewers []uuid.UUID `json:"assigned_reviewers"`
+				Reviewers []string `json:"assigned_reviewers"`
 			} `json:"pr"`
-			ReplacedBy uuid.UUID `json:"replaced_by"`
+			ReplacedBy string `json:"replaced_by"`
 		}
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
@@ -409,8 +409,8 @@ func TestPullRequestReassign(t *testing.T) {
 
 	t.Run("Reassign_Conflict_NotAssigned", func(t *testing.T) {
 		reassignReq := struct {
-			PullRequestID uuid.UUID `json:"pull_request_id"`
-			UserID        uuid.UUID `json:"old_user_id"`
+			PullRequestID string `json:"pull_request_id"`
+			UserID        string `json:"old_user_id"`
 		}{PullRequestID: prID, UserID: authorID}
 		body, _ := json.Marshal(reassignReq)
 
@@ -437,20 +437,20 @@ func TestGetReviewAssignedPRs(t *testing.T) {
 	ctx := context.Background()
 
 	const teamName = "getreview_squad"
-	targetReviewerID := uuid.New()
-	otherReviewerID := uuid.New()
-	authorID := uuid.New()
+	targetReviewerID := uuid.New().String()
+	otherReviewerID := uuid.New().String()
+	authorID := uuid.New().String()
 
-	prTargetID1 := uuid.New()
-	prTargetID2 := uuid.New()
-	prOtherID3 := uuid.New()
+	prTargetID1 := uuid.New().String()
+	prTargetID2 := uuid.New().String()
+	prOtherID3 := uuid.New().String()
 
 	teamReq := TeamWithMembers{
 		TeamName: teamName,
 		Members: []struct {
-			ID       uuid.UUID `json:"user_id"`
-			Username string    `json:"username"`
-			IsActive bool      `json:"is_active"`
+			ID       string `json:"user_id"`
+			Username string `json:"username"`
+			IsActive bool   `json:"is_active"`
 		}{
 			{ID: authorID, Username: "Author", IsActive: true},
 			{ID: targetReviewerID, Username: "TargetRev", IsActive: true},
@@ -472,18 +472,18 @@ func TestGetReviewAssignedPRs(t *testing.T) {
 	addReviewerDirect(t, ctxDB, db, prOtherID3, otherReviewerID)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequestWithContext(ctx, "GET", "/users/getReview?user_id="+targetReviewerID.String(), nil)
+	req, _ := http.NewRequestWithContext(ctx, "GET", "/users/getReview?user_id="+targetReviewerID, nil)
 	r.ServeHTTP(w, req)
 
 	require.Equal(t, http.StatusOK, w.Code)
 
 	var resp struct {
-		UserID       uuid.UUID `json:"user_id"`
+		UserID       string `json:"user_id"`
 		PullRequests []struct {
-			ID       uuid.UUID `json:"pull_request_id"`
-			Name     string    `json:"pull_request_name"`
-			AuthorID uuid.UUID `json:"author_id"`
-			Status   string    `json:"status"`
+			ID       string `json:"pull_request_id"`
+			Name     string `json:"pull_request_name"`
+			AuthorID string `json:"author_id"`
+			Status   string `json:"status"`
 		} `json:"pull_requests"`
 	}
 	err = json.Unmarshal(w.Body.Bytes(), &resp)
@@ -492,7 +492,7 @@ func TestGetReviewAssignedPRs(t *testing.T) {
 	assert.Equal(t, targetReviewerID, resp.UserID)
 	assert.Len(t, resp.PullRequests, 2)
 
-	ids := map[uuid.UUID]bool{}
+	ids := map[string]bool{}
 	for _, p := range resp.PullRequests {
 		ids[p.ID] = true
 	}

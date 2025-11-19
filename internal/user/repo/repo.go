@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	"github.com/ilam072/avito-backend-internship/internal/types/domain"
 	"github.com/ilam072/avito-backend-internship/pkg/errutils"
 	"github.com/jackc/pgx/v5"
@@ -56,7 +55,7 @@ func (r *UserRepo) GetUsersByTeam(ctx context.Context, name string) ([]domain.Us
 	return users, nil
 }
 
-func (r *UserRepo) GetUserByID(ctx context.Context, ID uuid.UUID) (domain.User, error) {
+func (r *UserRepo) GetUserByID(ctx context.Context, ID string) (domain.User, error) {
 	query := `
 		SELECT id, name, is_active, team_id, created_at, updated_at
 		FROM users
@@ -81,7 +80,7 @@ func (r *UserRepo) GetUserByID(ctx context.Context, ID uuid.UUID) (domain.User, 
 	return user, nil
 }
 
-func (r *UserRepo) GetNewUserIDForPRReview(ctx context.Context, prID uuid.UUID, oldUserID uuid.UUID) (uuid.UUID, error) {
+func (r *UserRepo) GetNewUserIDForPRReview(ctx context.Context, prID string, oldUserID string) (string, error) {
 	query := `
    		SELECT id 
    		FROM users u 
@@ -93,17 +92,17 @@ func (r *UserRepo) GetNewUserIDForPRReview(ctx context.Context, prID uuid.UUID, 
    		ORDER BY random() 
    		LIMIT 1
 	`
-	var ID uuid.UUID
+	var ID string
 	if err := r.db.QueryRow(ctx, query, oldUserID, prID).Scan(&ID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return uuid.Nil, ErrUserNotFound
+			return "", ErrUserNotFound
 		}
-		return uuid.Nil, errutils.Wrap("failed to get new user id", err)
+		return "", errutils.Wrap("failed to get new user id", err)
 	}
 
 	return ID, nil
 }
-func (r *UserRepo) UpdateIsActive(ctx context.Context, ID uuid.UUID, isActive bool) error {
+func (r *UserRepo) UpdateIsActive(ctx context.Context, ID string, isActive bool) error {
 	query := `
 		UPDATE users
 		SET is_active = $1,
@@ -123,7 +122,7 @@ func (r *UserRepo) UpdateIsActive(ctx context.Context, ID uuid.UUID, isActive bo
 	return nil
 }
 
-func (r *UserRepo) UserExists(ctx context.Context, ID uuid.UUID) (bool, error) {
+func (r *UserRepo) UserExists(ctx context.Context, ID string) (bool, error) {
 	const query = `SELECT EXISTS(SELECT 1 FROM users WHERE id=$1)`
 	var exists bool
 
